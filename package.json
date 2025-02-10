@@ -1,0 +1,17 @@
+{
+  "name": "megaproject01",
+  "version": "1.0.0",
+  "description": "backend series",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [
+    "node",
+    "express",
+    "mongoose"
+  ],
+  "author": "abhay",
+  "license": "ISC",
+  "dependencies": {
+    "megaproject01": "file:"
+  }
+}
