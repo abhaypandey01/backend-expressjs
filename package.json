@@ -15,7 +15,8 @@
   "author": "abhay",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "prettier": "^3.5.0"
   },
   "dependencies": {
     "megaproject01": "file:"
