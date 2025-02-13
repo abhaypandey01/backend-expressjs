@@ -5,7 +5,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js"
   },
   "keywords": [
     "node",
@@ -19,6 +19,9 @@
     "prettier": "^3.5.0"
   },
   "dependencies": {
-    "megaproject01": "file:"
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "megaproject01": "file:",
+    "mongoose": "^8.10.0"
   }
 }
