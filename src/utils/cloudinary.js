@@ -10,12 +10,8 @@ cloudinary.config({
 const uploadOnCloudinary = async (localfilepath) => {
     try {
         if(!localfilepath) return console.log('File not provided');
-        const response = await cloudinary.uploader.upload(localfilepath,
-            {
-                format: "auto"
-            }
-        )
-        fs.unlinkSync(localfilepath)
+        const response = await cloudinary.uploader.upload(localfilepath)
+        //fs.unlinkSync(localfilepath)
         return response
         
     } catch (error) {
