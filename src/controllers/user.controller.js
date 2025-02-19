@@ -191,6 +191,10 @@ const refreshAccessToken = asyncHandler(async(req, res) =>
         const user = User.findById(decodedToken._id)
 
         if (!user) {
+            throw new ApiError(401,"Invalid token!!!" )
+        }
+
+        if (incomingRefreshToken !== user.refreshToken) {
             throw new ApiError(401,"Token is expired or already used!!!" )
         }
 
@@ -206,11 +210,13 @@ const refreshAccessToken = asyncHandler(async(req, res) =>
         .cookie("refreshToken", refreshToken, options)
         .cookie("accessToken", accessToken, options)
         .json(
-            200,
-            {
-                accessToken, refreshToken: refreshToken
-            },
-            "Access token refreshed."
+            new ApiResponse(
+                200,
+                {
+                    accessToken, refreshToken: refreshToken
+                },
+                "Access token refreshed." 
+            )
         )
     } )
 
