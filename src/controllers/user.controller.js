@@ -5,6 +5,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import { URL } from "url";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -225,7 +226,7 @@ const refreshAccessToken = asyncHandler(async(req, res) =>
         const { oldPassword, newPassword } = req.body; 
         const user = await User.findById(req.user?._id)
 
-        const isPasswordCorrect = await isPasswordCorrect(oldPassword)
+        const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
 
         if (!isPasswordCorrect) {
             throw new ApiError(400,"Invalid Password!!!")
@@ -389,7 +390,7 @@ const refreshAccessToken = asyncHandler(async(req, res) =>
                 },
                 {
                     $addFields:{
-                        subscribbersCount:{
+                        subscribersCount:{
                             $size: {$subscribers}
                         },
                         channelsSubscribedTo: {
@@ -411,7 +412,7 @@ const refreshAccessToken = asyncHandler(async(req, res) =>
                         avatar: 1,
                         coverImage: 1,
                         isSubscribed: 1,
-                        subscribbersCount: 1,
+                        subscribersCount: 1,
                         channelsSubscribedTo: 1,
                         email: 1
                     }
@@ -436,6 +437,61 @@ const refreshAccessToken = asyncHandler(async(req, res) =>
         )
     } )
 
+    const watchHistory = asyncHandler(async (req, res) => {
+        const user = await User.aggregate(
+            [
+                {
+                $match: {
+                    _id: new mongoose.Types.ObjectId(req.user._id),
+                }
+                },
+                {
+                    $lookup: {
+                        from: "videos",
+                        localField: "watchHistory",
+                        foreignField: "_id",
+                        as: "watchHistory",
+                        pipeline: [
+                            {
+                                $lookup: {
+                                    from:"users",
+                                    localField:"owner",
+                                    foreignField:"_id",
+                                    as: "owner",
+                                    pipeline:[
+                                        {
+                                            $project:{
+                                                fullname: 1,
+                                                username: 1
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                $addFields:{
+                                    owner: {
+                                        $first: "$owner"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+            ]
+        )
+
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                user[0].watchHistory,
+                "Watch history fetched successfully."
+            )
+        )
+    })
+
 export {
     registerUser,
     loginUser,
@@ -446,5 +502,6 @@ export {
     updateAccountDetails,
     updateAvatar,
     updateCoverImage,
-    userChannelProfile
+    userChannelProfile,
+    watchHistory
 }
