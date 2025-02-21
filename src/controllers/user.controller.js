@@ -391,14 +391,14 @@ const refreshAccessToken = asyncHandler(async(req, res) =>
                 {
                     $addFields:{
                         subscribersCount:{
-                            $size: {$subscribers}
+                            $size: "$subscribers"
                         },
                         channelsSubscribedTo: {
-                            $size: {$subscribedTo}
+                            $size: "$subscribedTo"
                         },
                         isSubscribed:{
                             $cond: {
-                                if: {$in: [req.user?._id, "subscribers.subscriber"]},
+                                if: {$in: [req.user?._id, "$subscribers.subscriber"]},
                                 then: true,
                                 else: false
                             }
