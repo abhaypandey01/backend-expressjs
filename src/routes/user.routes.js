@@ -2,6 +2,7 @@ import { Router } from "express";
 import { loginUser, logoutUser, registerUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAvatar, updateCoverImage, userChannelProfile, updateAccountDetails, watchHistory } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { publishVideo } from "../controllers/video.controller.js";
 
 const router = Router()
 
@@ -40,5 +41,18 @@ router.route("/coverImage").patch(verifyJWT, upload.single("coverImage"), update
 router.route("/channel/:username").get(verifyJWT, userChannelProfile);
 
 router.route("/history").get(verifyJWT, watchHistory);
+
+router.route("/publish-video").post(verifyJWT, upload.fields(
+    [
+        {
+            name: "videofile",
+            maxCount: 1
+        },
+        {
+            name: "thumbnail",
+            maxCount: 1
+        }
+    ]
+) , publishVideo)
 
 export default router;

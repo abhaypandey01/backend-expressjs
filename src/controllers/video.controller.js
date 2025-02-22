@@ -17,28 +17,28 @@ const publishVideo = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Title and description are compulsory!!!")
     }
 
-    let videoLocalPath;
+    const videoLocalPath = req.files?.videofile[0]?.path;
+
+    if(!videoLocalPath){
+        throw new ApiError(400, "Video file missing!!!")
+    }
 
     let thumbnailLocalPath;
 
-    if ( req.files && Array.isArray(req.files.video) && req.files.video > 0) {
-        videoLocalPath = req.files.video[0].path;
-    }
-
-    if ( req.files && Array.isArray(req.files.thumbnail) && req.files.thumbnail > 0) {
+    if ( req.files && Array.isArray(req.files.thumbnail) && req.files.thumbnail.length > 0) {
         thumbnailLocalPath = req.files.thumbnail[0].path;
     }
 
-    const videofile = await uploadOnCloudinary(videoLocalPath);
+    const videofile = await uploadOnCloudinary(videoLocalPath, "video");
 
-    if(!video){
-        throw new ApiError(401, "Error while uploading video file");
+    if(!videofile){
+        throw new ApiError(400, "Error while uploading video file");
     }
 
     const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
 
     if(!thumbnail){
-        throw new ApiError(401, "Error while uploading thumbnail file");
+        throw new ApiError(400, "Error while uploading thumbnail file");
     }
 
     const video = await Video.create(
@@ -47,17 +47,46 @@ const publishVideo = asyncHandler(async (req, res) => {
             thumbnail: thumbnail.url,
             title,
             description,
+            duration: videofile.duration,
         }
     )
 
-    const publishedVideo = await Video.findById(video._id)
+    //const publishedVideo = await Video.findById(video._id)
+
+    const publishedVideo = await Video.aggregate(
+        [
+            {
+                $lookup:{
+                    from: "users",
+                    localField: "owner",
+                    foreignField: "_id",
+                    as: "ownerDetails",
+                }
+            },
+            {
+                $unwind: "$ownerDetails"
+            },
+            {
+                $project:{
+                    videofile: 1,
+                    thumbnail: 1,
+                    title: 1,
+                    description: 1,
+                    duration: 1,
+                    "ownerDetails._id": 1,
+                    "ownerDetails.username": 1,
+                    "ownerDetails.avatar": 1,
+                }
+            }
+        ]
+    )
 
     return res
     .status(200)
     .json(
         new ApiResponse(
             200,
-            publishedVideo,
+            publishedVideo[0],
             "Video published successfully."
         )
     )

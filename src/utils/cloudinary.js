@@ -7,10 +7,14 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_SECRET_KEY,
 })
 
-const uploadOnCloudinary = async (localfilepath) => {
+const uploadOnCloudinary = async (localfilepath, type = "image") => {
     try {
         if(!localfilepath) return console.log('File not provided');
-        const response = await cloudinary.uploader.upload(localfilepath)
+        const response = await cloudinary.uploader.upload(localfilepath,
+            {
+                resource_type: type,
+            }
+        )
         //fs.unlinkSync(localfilepath)
         return response
         
