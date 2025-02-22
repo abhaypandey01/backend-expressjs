@@ -2,7 +2,7 @@ import { Router } from "express";
 import { loginUser, logoutUser, registerUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAvatar, updateCoverImage, userChannelProfile, updateAccountDetails, watchHistory } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { publishVideo } from "../controllers/video.controller.js";
+import { publishVideo, videoDetails } from "../controllers/video.controller.js";
 
 const router = Router()
 
@@ -54,5 +54,7 @@ router.route("/publish-video").post(verifyJWT, upload.fields(
         }
     ]
 ) , publishVideo)
+
+router.route("/video-details").get(verifyJWT, videoDetails)
 
 export default router;

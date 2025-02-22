@@ -7,6 +7,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import { URL } from "url";
 import mongoose from "mongoose";
+import { log } from "console";
 
 const publishVideo = asyncHandler(async (req, res) => {
     const { title, description } = req.body;
@@ -48,12 +49,13 @@ const publishVideo = asyncHandler(async (req, res) => {
             title,
             description,
             duration: videofile.duration,
+            owner: req.user?._id,
         }
     )
 
-    //const publishedVideo = await Video.findById(video._id)
+    const publishedVideo = await Video.findById(video._id)
 
-    const publishedVideo = await Video.aggregate(
+    /*const publishedVideo = await Video.aggregate(
         [
             {
                 $lookup:{
@@ -79,19 +81,68 @@ const publishVideo = asyncHandler(async (req, res) => {
                 }
             }
         ]
-    )
+    )*/
+
+    // const videoDetails = await Video.findById(video._id)
 
     return res
     .status(200)
     .json(
         new ApiResponse(
             200,
-            publishedVideo[0],
+            publishedVideo,
             "Video published successfully."
+        )
+    )
+})
+
+const videoDetails = asyncHandler(async (req, res) => {
+
+    const video = await Video.aggregate([
+        {
+            $lookup:{
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+            }
+        },
+        {
+            $unwind: "$owner"
+        },
+        {
+            $project:{
+                title: 1,
+                description: 1,
+                videofile: 1,
+                thumbnail: 1,
+                duration: 1,
+                "owner.username": 1,
+                "owner.fullname": 1,
+                "owner.avatar": 1,
+            }
+        }
+    ]);
+
+    console.log(video);
+    
+
+    if (!video) {
+        throw new ApiError(500, "Cant find video something went wrong!!!")
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            video[0],
+            "Video details fetched succesfully."
         )
     )
 })
 
 export {
     publishVideo,
+    videoDetails
 }
