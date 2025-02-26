@@ -1,14 +1,21 @@
 import mongoose, {Schema} from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
+import { title } from "process";
 
 const videoSchema = new Schema(
     {
         videofile: {
-            type: String,
+            type: {
+                url: String,
+                public_id: String,
+            },
             required: true,
         },
         thumbnail: {
-            type: String,
+            type: {
+                url: String,
+                public_id: String,
+            },
             required: true,
         },
         title: {
@@ -39,6 +46,9 @@ const videoSchema = new Schema(
     {timestamps: true}
 )
 
+videoSchema.index({
+    title: "text", description: "text"
+})
 videoSchema.plugin(mongooseAggregatePaginate)
 
 export const Video = mongoose.model("Video", videoSchema)
