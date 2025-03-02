@@ -2,7 +2,6 @@
 import { app } from "./app.js";
 import connectDB from "./db/index.js";
 import dotenv from "dotenv";
-import { createVideoIndexes } from "./utils/vidSearch.js";
 dotenv.config(
     {
         path: './.env'
