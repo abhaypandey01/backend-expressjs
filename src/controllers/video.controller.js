@@ -6,6 +6,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
 import fs from "fs";
 import util from "util";
+import { title } from "process";
 
 const unlinkFile = util.promisify(fs.unlink);
 
@@ -90,8 +91,8 @@ const videoDetails = asyncHandler(async (req, res) => {
             $project:{
                 title: 1,
                 description: 1,
-                videofile: 1,
-                thumbnail: 1,
+                "videofile.url": 1,
+                "thumbnail.url": 1,
                 duration: 1,
                 "owner.username": 1,
                 "owner.fullname": 1,
@@ -162,7 +163,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
 // getvideos based on querry
 const getAllVideos = asyncHandler(async (req, res) => {
 
-    const { searchQuery, sortType } = req.query;
+    const { searchQuery, sortType, page = 1, limit = 10 } = req.query;
 
     if (!(searchQuery || sortType)) {
         throw new ApiError(401, "Invalid query or query missing!!!")
@@ -170,23 +171,48 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     let sorted = sortType === "asc" ? 1 : -1
 
-    const searchResult = await Video.find({
-        $text:{
-            $search: searchQuery,
-            $caseSensitive: false
+    const videoList = await Video.aggregate([
+        {
+            $lookup:{
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner"
+            }
+        },
+        {
+            $unwind: "$owner"
+        },
+        {
+            $sort:{
+                createdAt: sorted,
+            }
+        },
+        {
+            $skip: (parseInt(page) -1) * parseInt(limit)
+        },
+        {
+            $limit: parseInt(limit)
+        },
+        {
+            $project: {
+                videofile: 1,
+                thumbnail: 1,
+                description: 1,
+                title: 1,
+                "owner.fullname": 1,
+                "owner.username" : 1,
+                "owner.avatar" : 1,
+            }
         }
-    })
-    .sort({
-        title: sorted
-    })
-    .select("title description videofile.url thumbnail.url owner")
+    ])
 
     return res
     .status(200)
     .json(
         new ApiResponse(
             200,
-            searchResult[0],
+            videoList,
             "Search query executed succefully"
         )
     )

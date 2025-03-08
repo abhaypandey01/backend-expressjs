@@ -17,6 +17,16 @@ import {
     updateComment,
 
     } from "../controllers/comment.controller.js";
+import {
+    toggleCommentLike,
+    toggleTweetLike,
+    toggleVideoLike 
+    } from "../controllers/like.controller.js";
+import { 
+    deleteTweet,
+    publishTweet, 
+    updateTweet
+} from "../controllers/tweet.controller.js";
 
 const router = Router()
 
@@ -95,5 +105,19 @@ router.route("/edit-comment/:commentId").patch(verifyJWT, updateComment)
 router.route("/delete-comment/:commentId").post(verifyJWT, deleteComment)
 
 router.route("/comments/:videoId").get(verifyJWT, listAllComments)
+
+// like routes
+router.route("/like/:videoId").post(verifyJWT, toggleVideoLike)
+
+router.route("/comment/:commentId").post(verifyJWT, toggleCommentLike)
+
+router.route("/tweet/:tweetId").post(verifyJWT, toggleTweetLike)
+
+// tweet routes
+router.route("/publish-tweet").post(verifyJWT, publishTweet)
+
+router.route("/update-tweet/:tweetId").patch(verifyJWT, updateTweet)
+
+router.route("/delete-tweet/:tweetId").post(verifyJWT, deleteTweet)
 
 export default router;

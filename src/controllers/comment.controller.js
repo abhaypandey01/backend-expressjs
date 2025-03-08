@@ -115,7 +115,7 @@ const deleteComment = asyncHandler(async (req, res) => {
     )
 })
 
-const listAllComments = asyncHandler(async (req, res) => {
+/* const listAllComments = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     const { page = 1, limit = 10 } = req.query;
 
@@ -209,6 +209,65 @@ const listAllComments = asyncHandler(async (req, res) => {
             "Comments fetched successfully."
         )
     )
+}) */
+
+const listAllComments = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    if(!isValidObjectId(videoId)) {
+        throw new ApiError(401, "Invalid id, video comments cannot be found.")
+    }
+
+    const commentAggregate = await Comment.aggregate([
+        {
+            $match: {
+                video: new mongoose.Types.ObjectId(videoId),
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner"
+            }
+        },
+        {
+            $unwind: "$owner"
+        },
+        {
+            $sort:{
+                createdAt: -1
+            }
+        },
+        {
+            $skip: (parseInt(page) -1) * parseInt(limit)
+        },
+        {
+            $limit: parseInt(limit)
+        },
+        {
+            $project: {
+                content: 1,
+                "owner.fullname": 1,
+                "owner.username": 1,
+                "owner.avatar.url": 1,
+            }
+        },
+    ]);
+
+    if(!commentAggregate) {
+        throw new ApiError(500, "Comments couldn't fetched try again.")
+    }
+
+    return res.status(200)
+    .json(
+        new ApiResponse(
+            200,
+            commentAggregate,
+            "Comment fetched successfully."
+        )
+    )
 })
 
 export {
@@ -217,4 +276,4 @@ export {
     deleteComment,
     listAllComments,
     
-}
+} 
