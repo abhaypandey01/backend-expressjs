@@ -93,11 +93,62 @@ const deleteTweet = asyncHandler(async (req, res) => {
 })
 
 const ListAllTweets = asyncHandler(async (req, res) => {
-    const {  } = req.params;
+    const { query, sortType, page = 1, limit = 10 } = req.query;
+
+    if(!(query || sortType)) {
+        throw new ApiError(401, "Search index and sort type required to specify.")
+    }
+
+    const sorted = sortType === "asc" ? 1 : -1;
+
+    const allTweets = await Tweet.aggregate([
+        {
+            $lookup:{
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner"
+            }
+        },
+        {
+            $unwind: "$owner"
+        },
+        {
+            $sort: {
+                createdAt: sorted,
+            }
+        },
+        {
+            $skip: (parseInt(page) -1) * parseInt(limit),
+        },
+        {
+            $limit: parseInt(limit),
+        },
+        {
+            $project:{
+                content: 1,
+                "owner.fullname": 1,
+                "owner.username": 1,
+                "owner.avatar": 1,
+                createdAt: 1,
+                updatedAt: 1,
+            }
+        }
+    ])
+
+    return res.status(200)
+    .json(
+        new ApiResponse(
+        200,
+        allTweets,
+        "Tweets fetched successfully."
+        )
+    )
 })
 
 export {
     publishTweet,
     updateTweet,
     deleteTweet,
+    ListAllTweets
 }

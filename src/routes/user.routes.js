@@ -24,6 +24,7 @@ import {
     } from "../controllers/like.controller.js";
 import { 
     deleteTweet,
+    ListAllTweets,
     publishTweet, 
     updateTweet
 } from "../controllers/tweet.controller.js";
@@ -119,5 +120,7 @@ router.route("/publish-tweet").post(verifyJWT, publishTweet)
 router.route("/update-tweet/:tweetId").patch(verifyJWT, updateTweet)
 
 router.route("/delete-tweet/:tweetId").post(verifyJWT, deleteTweet)
+
+router.route("/tweets").get(verifyJWT, ListAllTweets)
 
 export default router;

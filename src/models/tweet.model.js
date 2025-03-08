@@ -14,4 +14,8 @@ const tweetSchema = new Schema(
     { timestamps: true }
 );
 
+tweetSchema.index({
+    title: "text", description: "text"
+})
+
 export const Tweet = mongoose.model("Tweet", tweetSchema);
