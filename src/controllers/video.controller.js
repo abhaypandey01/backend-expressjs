@@ -2,11 +2,13 @@ import {asyncHandler} from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js";
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Video } from "../models/video.model.js";
+import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import fs from "fs";
 import util from "util";
 import { title } from "process";
+import { watchHistory } from "./user.controller.js";
 
 const unlinkFile = util.promisify(fs.unlink);
 
@@ -73,19 +75,91 @@ const publishVideo = asyncHandler(async (req, res) => {
     )
 })
 
-const videoDetails = asyncHandler(async (req, res) => {
+const getVideoDetails = asyncHandler(async (req, res) => {
+
+    const { videoId } = req.params;
+
+    if(!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid video id, video not found!")
+    }
 
     const video = await Video.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(videoId)
+            }
+        },
         {
             $lookup:{
                 from: "users",
                 localField: "owner",
                 foreignField: "_id",
                 as: "owner",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "subscriptions",
+                            localField: "_id",
+                            foreignField: "channel",
+                            as: "subscribers"
+                        }
+                    },
+                    {
+                        $addFields: {
+                            subscriberCount: {
+                                $size: "$subscribers"
+                            },
+                            isSubscribed: {
+                                $cond: {
+                                    if: {
+                                        $in: [
+                                            req.user?._id, "$subscribers.subscriber"
+                                        ]
+                                    },
+                                    then: true,
+                                    else: false,
+                                }
+                            }
+                        }
+                    },
+                    {
+                        $project: {
+                            username: 1,
+                            avatar: 1,
+                            subscriberCount: 1,
+                            isSubscribed: 1,
+                        }
+                    }
+                ]
             }
         },
         {
-            $unwind: "$owner"
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "likes"
+            }
+        },
+        
+        {
+            $addFields: {
+                likesCount: {
+                    $size: "$likes"
+                },
+                owner: {
+                    $first: "$owner"
+                },
+                isLiked: {
+                    $cond: {
+                        if: {
+                            $in: [ req.user?._id, "$likes.likedBy" ]
+                        },
+                        then: true,
+                        else: false,
+                    }
+                }
+            }
         },
         {
             $project:{
@@ -94,19 +168,36 @@ const videoDetails = asyncHandler(async (req, res) => {
                 "videofile.url": 1,
                 "thumbnail.url": 1,
                 duration: 1,
-                "owner.username": 1,
-                "owner.fullname": 1,
-                "owner.avatar": 1,
+                createdAt: 1,
+                views: 1,
+                owner: 1,
+                likesCount: 1,
+                isLiked: 1,
             }
         }
     ]);
 
-    console.log(video);
+    // console.log(video);
     
 
     if (!video) {
-        throw new ApiError(500, "Cant find video something went wrong!!!")
+        throw new ApiError(404, "Cant find video something went wrong!!!")
     }
+
+    await Video.findByIdAndUpdate(
+        videoId,
+        {
+            $inc: {
+                views: 1,
+            }
+        }
+    );
+
+    await User.findByIdAndUpdate( req.user?._id,{
+        $addToSet:{
+            watchHistory: videoId,
+        }
+    } );
 
     return res
     .status(200)
@@ -333,7 +424,7 @@ const togglePublishVideo = asyncHandler(async (req, res) => {
 
 export {
     publishVideo,
-    videoDetails,
+    getVideoDetails,
     deleteVideo,
     getAllVideos,
     updateVideoDetails,

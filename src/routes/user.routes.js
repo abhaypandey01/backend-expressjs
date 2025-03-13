@@ -8,7 +8,7 @@ import {
     publishVideo, 
     togglePublishVideo, 
     updateVideoDetails, 
-    videoDetails
+    getVideoDetails
     } from "../controllers/video.controller.js";
 import {
     addComment, 
@@ -28,6 +28,12 @@ import {
     publishTweet, 
     updateTweet
 } from "../controllers/tweet.controller.js";
+import { 
+    channelsSubscribed, 
+    listAllSubscribers, 
+    toggleSubscribe 
+} from "../controllers/subscription.controller.js";
+import { getChannnelStats } from "../controllers/dashboard.controller.js";
 
 const router = Router()
 
@@ -84,7 +90,7 @@ router.route("/publish-video").post(verifyJWT, upload.fields(
     ]
 ) , publishVideo)
 
-router.route("/video-details").get(verifyJWT, videoDetails)
+router.route("/video-details/:videoId").get(verifyJWT, getVideoDetails)
 
 router.route("/search").get(verifyJWT, getAllVideos)
 
@@ -122,5 +128,17 @@ router.route("/update-tweet/:tweetId").patch(verifyJWT, updateTweet)
 router.route("/delete-tweet/:tweetId").post(verifyJWT, deleteTweet)
 
 router.route("/tweets").get(verifyJWT, ListAllTweets)
+
+// subscription routes
+
+router.route("/subscribe/:channelId").post(verifyJWT, toggleSubscribe)
+
+router.route("/list-subscribers/:channelId").get(verifyJWT, listAllSubscribers)
+
+router.route("/channels-subscribed/:userId").get(verifyJWT, channelsSubscribed)
+
+// dashboard routes
+
+router.route("/channel-stats/:channelId").get(verifyJWT, getChannnelStats)
 
 export default router;

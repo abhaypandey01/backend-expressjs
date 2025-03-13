@@ -6,6 +6,10 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import { URL } from "url";
 import mongoose from "mongoose";
+import fs from "fs";
+import util from "util";
+
+const unlinkFile = util.promisify(fs.unlink);
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -95,6 +99,9 @@ const registerUser = asyncHandler(async (req,res) => {
     if (!createdUser) {
         throw new ApiError(500,"Something went wrong while creating user!!!")
     }
+
+    await unlinkFile(avatarLocalPath)
+    await unlinkFile(coverImageLocalPath)
 
     return res.status(201).json( new ApiResponse(201, createdUser, "User Created Successfully"))
 
