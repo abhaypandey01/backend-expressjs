@@ -160,11 +160,20 @@ const getVideoDetails = asyncHandler(async (req, res) => {
                     $unwind: "$commentOwner"
                 },
                 {
+                    $sort:{
+                        createdAt: -1,
+                    }
+                },
+                {
+                    $limit: 5,
+                },
+                {
                     $project: {
-                        _id: 0,
+                        _id: 1,
                         content: 1,
                         //video: 1,
                         "commentOwner.fullname": 1,
+                        "commentOwner.username": 1,
                         "commentOwner.avatar": 1,
                         createdAt: 1,
                     }
@@ -182,9 +191,6 @@ const getVideoDetails = asyncHandler(async (req, res) => {
                 },
                 owner: {
                     $first: "$owner"
-                },
-                comments: {
-                    $first: "$comments"
                 },
                 isLiked: {
                     $cond: {

@@ -54,7 +54,76 @@ const getChannnelStats = asyncHandler( async(req, res) => {
 } )
 
 const getChannnelVideos = asyncHandler( async(req, res) => {
+    const { channelId, page=1, limit=5 } = req.params;
+    //const userId = req.user?._id;
 
+    if(!isValidObjectId(channelId)) {
+        throw new ApiError(400, "Invalid id, channel not find.")
+    }
+
+    const videoList = await Video.aggregate([
+        {
+            $match:{
+                owner: new mongoose.Types.ObjectId(channelId),
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "likes"
+            }
+        },
+        {
+            $lookup: {
+                from: "comments",
+                localField: "_id",
+                foreignField: "video",
+                as: "comments"
+            }
+        },
+        {
+            $addFields: {
+                likesCount: {
+                    $size: "$likes"
+                },
+                totalComments: {
+                    $size: "$comments"
+                },
+            }
+        },
+        {
+            $sort:{
+                createdAt: -1,
+            }
+        },
+        {
+            $skip: (parseInt(page) -1) * parseInt(limit)
+        },
+        {
+            $limit: parseInt(limit),
+        },
+        {
+            $project: {
+                "videofile.url": 1,
+                "thumbnail.url": 1,
+                title: 1,
+                duration: 1,
+                isPublished: 1,
+                likesCount: 1,
+                totalComments: 1,
+                createdAt: 1,
+            }
+        }
+    ]);
+
+    return res.status(200)
+    .json( new ApiResponse(
+        200,
+        videoList,
+        "Channel videos listed successfully."
+    ) )
 })
 
 export {

@@ -1,5 +1,18 @@
 import { Router } from "express";
-import { loginUser, logoutUser, registerUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAvatar, updateCoverImage, userChannelProfile, updateAccountDetails, watchHistory } from "../controllers/user.controller.js";
+import { 
+    loginUser, 
+    logoutUser, 
+    registerUser, 
+    refreshAccessToken, 
+    changeCurrentPassword, 
+    getCurrentUser, 
+    updateAvatar, 
+    updateCoverImage, 
+    userChannelProfile, 
+    updateAccountDetails, 
+    watchHistory 
+} 
+from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { 
@@ -33,7 +46,10 @@ import {
     listAllSubscribers, 
     toggleSubscribe 
 } from "../controllers/subscription.controller.js";
-import { getChannnelStats } from "../controllers/dashboard.controller.js";
+import { 
+    getChannnelStats, 
+    getChannnelVideos 
+} from "../controllers/dashboard.controller.js";
 
 const router = Router()
 
@@ -140,5 +156,7 @@ router.route("/channels-subscribed/:userId").get(verifyJWT, channelsSubscribed)
 // dashboard routes
 
 router.route("/channel-stats/:channelId").get(verifyJWT, getChannnelStats)
+
+router.route("/channel-videos/:channelId").get(verifyJWT, getChannnelVideos)
 
 export default router;
