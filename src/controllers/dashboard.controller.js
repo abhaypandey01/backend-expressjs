@@ -54,7 +54,8 @@ const getChannnelStats = asyncHandler( async(req, res) => {
 } )
 
 const getChannnelVideos = asyncHandler( async(req, res) => {
-    const { channelId, page=1, limit=5 } = req.params;
+    const { channelId } = req.params;
+    const { page=1, limit=5  } = req.query;
     //const userId = req.user?._id;
 
     if(!isValidObjectId(channelId)) {
