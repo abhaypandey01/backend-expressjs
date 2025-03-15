@@ -89,7 +89,7 @@ const listAllSubscribers = asyncHandler( async (req, res) => {
     ) )
 })
 
-const channelsSubscribed = asyncHandler( async (req, res) => {
+const listchannelsSubscribed = asyncHandler( async (req, res) => {
     const { userId } = req.params;
     if(!isValidObjectId(userId)) {
         throw new ApiError(401, "Invalid id, user not found!")
@@ -139,5 +139,5 @@ const channelsSubscribed = asyncHandler( async (req, res) => {
 export {
     toggleSubscribe,
     listAllSubscribers,
-    channelsSubscribed,
+    listchannelsSubscribed,
 }

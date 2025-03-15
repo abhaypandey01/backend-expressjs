@@ -308,6 +308,11 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     const videoList = await Video.aggregate([
         {
+            $match: {
+                $text: { $search: searchQuery }
+            }
+        },
+        {
             $lookup:{
                 from: "users",
                 localField: "owner",
@@ -331,13 +336,14 @@ const getAllVideos = asyncHandler(async (req, res) => {
         },
         {
             $project: {
-                videofile: 1,
-                thumbnail: 1,
+                "videofile.url": 1,
+                "thumbnail.url": 1,
                 description: 1,
                 title: 1,
                 "owner.fullname": 1,
                 "owner.username" : 1,
                 "owner.avatar" : 1,
+                duration: 1,
             }
         }
     ])
@@ -359,9 +365,9 @@ const updateVideoDetails = asyncHandler(async(req, res) => {
     const { title, description } = req.body;
     const userId = req.user?._id
 
-    if(!( title || description)) {
+    /*if(!title || !description) {
         throw new ApiError(401, "Title and description missing in body.")
-    }
+    } */
 
     if( !mongoose.Types.ObjectId.isValid(videoId) ) {
         throw new ApiError(401, "Invalid video id.")
@@ -423,9 +429,11 @@ const updateVideoDetails = asyncHandler(async(req, res) => {
 
     return res.status(200)
     .json(
-        200,
+        new ApiResponse(
+            200,
         updatedVideo,
         "Video details updated successfully."
+        )
     )
 })
 

@@ -103,6 +103,11 @@ const ListAllTweets = asyncHandler(async (req, res) => {
 
     const allTweets = await Tweet.aggregate([
         {
+            $match:{
+                $text: { $search: query.toString() }
+            }
+        },
+        {
             $lookup:{
                 from: "users",
                 localField: "owner",
